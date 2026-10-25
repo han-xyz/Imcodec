@@ -2023,11 +2023,10 @@ public partial record ResUnequipCategory : TypeCache.Result {
 }
 
 /// <summary>
-/// Player owns the expansion (ExpansionData::EDC_Bank). The data carries only this field, with no m_applyNOT / m_operator.
-/// The class name is a guess: no name found in the client data hashes to 0x5820E493.
+/// Grants an expansion of an ExpansionData category (e.g. EDC_Bank); found in elixir equip and unequip action lists.
 /// </summary>
 [PropertySerializationTarget]
-public partial record ReqHasExpansion : Requirement {
+public partial record ResAddExpansion : TypeCache.Result {
 
     public override uint GetHash() => 0x5820E493;
 
