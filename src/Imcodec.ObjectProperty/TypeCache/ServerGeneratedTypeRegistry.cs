@@ -421,7 +421,7 @@ public partial record ResAddEncounterXP : TypeCache.Result {
 
     public override uint GetHash() => 798482874;
 
-    // PropertyField: m_experience (int)
+    [PropertyField(0x2D42E082, 31)] public int m_experience { get; set; }
 
 }
 
@@ -447,8 +447,8 @@ public partial record ResAddTreasureSpell : TypeCache.Result {
 
     public override uint GetHash() => 1787561491;
 
-    // PropertyField: m_sourceType (string)
-    // PropertyField: m_spellName (string)
+    [PropertyField(0x896B452E, 31)] public string m_sourceType { get; set; } = "";
+    [PropertyField(0xA03F077C, 31)] public string m_spellName { get; set; } = "";
 
 }
 
