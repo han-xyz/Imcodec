@@ -986,13 +986,13 @@ public partial record CombatSigilObjectInfo : CoreObjectInfo {
     // SIZE : 72 bits
     [PropertyField(0x3C345132, 31)] public bool m_unknown_boolean_3 { get; set; }
 
-    // HASH : 0x61B4E11E
-    // SIZE : 72 bits
-    [PropertyField(0x61B4E11E, 31)] public bool m_unknown_boolean_4 { get; set; }
+    // The name hashes to 0x61B4E11E as a bool. True only on the tutorial sigils.
+    [PropertyField(0x61B4E11E, 31)] public bool m_disablePlayerDecks { get; set; }
 
-    // HASH : 0x37BEB1CF
-    // SIZE : 8
-    [PropertyField(0x37BEB1CF, 31)] public int m_unknown_uint_2 { get; set; }
+    // Name unknown: the client ignores this class, and no client name hashes to 0x37BEB1CF. The value is the
+    // base number of enemies a fight takes in; each extra player adds one. -1 means one enemy per player, and 0
+    // (or any other negative value) means the server default.
+    [PropertyField(0x37BEB1CF, 31)] public int m_baseEnemyCount { get; set; }
 
     // HASH : 0x62794D39
     // SIZE : 8
@@ -1001,6 +1001,17 @@ public partial record CombatSigilObjectInfo : CoreObjectInfo {
     // HASH : 0x6FA14D24
     // SIZE : 8
     [PropertyField(0x6FA14D24, 31)] public uint m_unknown_uint_4 { get; set; }
+
+}
+
+/// <summary>
+/// The sigil object the PvP arenas place: a combat sigil object under the class hash of the client class
+/// <c>PvPCombatSigilInfo</c>.
+/// </summary>
+[PropertySerializationTarget]
+public partial record PvPCombatSigilObjectInfo : CombatSigilObjectInfo {
+
+    public override uint GetHash() => 744574030;
 
 }
 
@@ -1085,6 +1096,9 @@ public partial record MinigameSigilInfo : CoreObjectInfo {
     [PropertyField(0x62A2160A, 31)] public List<ByteString> m_deactivateEvents { get; set; } = [];
     [PropertyField(0x3BF5B2D, 31)] public bool m_unknown_boolean_2 { get; set; }
     [PropertyField(0xA955FFA6, 31)] public RequirementList m_requirements { get; set; } = new();
+    [PropertyField(0x5A66B8B0, 31)] public ByteString m_successZone { get; set; }
+    [PropertyField(0x8BAF14A0, 31)] public List<ByteString> m_successLocations { get; set; } = [];
+    [PropertyField(0x23716AB9, 31)] public float m_countdownTimer { get; set; }
 
     // HASH : 0xC8C87586
     // SIZE : 87 bits
@@ -1095,17 +1109,11 @@ public partial record MinigameSigilInfo : CoreObjectInfo {
     // HASH : 0x616A2C5E
     // SIZE : 80 bits
 
-    // HASH : 0x5A66B8B0
-    // SIZE: 432 bits
-
     // HASH : 0x916BBDD2
     // SIZE: 80 bits
 
     // HASH : 0x996A9C1F
     // SIZE : 80 bits
-
-    // HASH : 0x8BAF14A0
-    // SIZE: 440 bits
 
     // HASH : 0xAA85756F
     // SIZE: 96 bits
@@ -1121,9 +1129,6 @@ public partial record MinigameSigilInfo : CoreObjectInfo {
 
     // HASH : 0x721F110C
     // SIZE : 80 bits
-
-    // HASH : 0x23716AB9
-    // SIZE : 96 bits
 
     // HASH : 0x8976BB77
     // SIZE : 80 bits
@@ -2530,5 +2535,35 @@ public partial record InteractCooldownOptionTemplate : InteractOptionTemplate {
     [PropertyField(0x766CDA0B, 31)] public string m_serviceResult { get; set; } = "";
     [PropertyField(0xB4338B9A, 31)] public string m_displayKey { get; set; } = "";
     [PropertyField(0x9274F5CD, 31)] public string m_iconKey { get; set; } = "";
+
+}
+
+/// <summary>
+/// A pet game kiosk. <c>m_petGameName</c> is the name of the pet game the kiosk opens, which is the name of one
+/// <c>PetGameInfo</c> of the pet game config; it is empty on an object that is not tied to a single game.
+/// The base property is declared again so that it is written before the new one, as the game data has it.
+/// </summary>
+[PropertySerializationTarget]
+public partial record PetGameKioskBehaviorTemplate : BehaviorTemplate {
+
+    public override uint GetHash() => 0x6550ADFB;
+
+    [PropertyField(0xBA9B842C, 7)] public new ByteString m_behaviorName { get => base.m_behaviorName; set => base.m_behaviorName = value; }
+    [PropertyField(0xABCBB13F, 31)] public string m_petGameName { get; set; } = "";
+
+}
+
+/// <summary>
+/// An object of the maze pet game that takes part in snack collection. <c>m_radius</c> is 200 on eight of the nine
+/// templates that carry it and 150 on the other; its use is not known.
+/// The base property is declared again so that it is written before the new one, as the game data has it.
+/// </summary>
+[PropertySerializationTarget]
+public partial record PetSnackCollectorBehaviorTemplate : BehaviorTemplate {
+
+    public override uint GetHash() => 0x6ABEDCD3;
+
+    [PropertyField(0xBA9B842C, 7)] public new ByteString m_behaviorName { get => base.m_behaviorName; set => base.m_behaviorName = value; }
+    [PropertyField(0x3AF933DF, 31)] public float m_radius { get; set; }
 
 }
