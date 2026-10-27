@@ -18,6 +18,8 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using System.Buffers.Binary;
+
 using Imcodec.MessageLayer;
 using Imcodec.MessageLayer.Generated;
 
@@ -281,16 +283,31 @@ public class MessageStreamDecoderTests {
     [Fact]
     public void TryGetFrameLength_LongForm() {
         // Arrange
-        // Magic, 0x8000 marker, 32-bit body length (0x00010000), then the control flag.
+        // Magic, 0x8000 marker, 32-bit length (0x00010000, counted like the small form), then the control flag.
         var nonControl = new byte[] { 0x0D, 0xF0, 0x00, 0x80, 0x00, 0x00, 0x01, 0x00, 0x00 };
         var control = new byte[] { 0x0D, 0xF0, 0x00, 0x80, 0x00, 0x00, 0x01, 0x00, 0x01 };
 
         // Act / Assert
-        Assert.False(MessageStreamDecoder.TryGetFrameLength(nonControl[..8], out _));
+        Assert.False(MessageStreamDecoder.TryGetFrameLength(nonControl[..7], out _));
         Assert.True(MessageStreamDecoder.TryGetFrameLength(nonControl, out var nonControlLength));
-        Assert.Equal(12 + 4 + 0x10000 + 1, nonControlLength);
+        Assert.Equal(8 + 0x10000, nonControlLength);
         Assert.True(MessageStreamDecoder.TryGetFrameLength(control, out var controlLength));
-        Assert.Equal(12 + 0x10000 + 1, controlLength);
+        Assert.Equal(8 + 0x10000, controlLength);
+    }
+
+    [Fact]
+    public void LongForm_LengthCountsBytesAfterLengthField() {
+        // Arrange
+        var message = new WIZARD_12_PROTOCOL.MSG_PLAYERWIZBANG { StateName = new string('x', 40000) };
+
+        // Act
+        var frame = MessageEncoder.Encode(message);
+
+        // Assert
+        var longLength = BinaryPrimitives.ReadUInt32LittleEndian(frame.AsSpan(4));
+        var bodyLength = frame.Length - 17; // 8 header + 4 body header + 4 message layer header + trailing null
+        Assert.Equal((uint) bodyLength + 9, longLength);
+        Assert.Equal(8 + (int) longLength, frame.Length);
     }
 
     [Fact]

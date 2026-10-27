@@ -38,8 +38,7 @@ public sealed class MessageStreamDecoder {
 
     // Magic (2) + length field (2) + control flag, opcode and padding (4) + trailing null (1).
     private const int MinimumFrameLength = 9;
-    private const int LongFormHeaderLength = 12;
-    private const int MessageLayerHeaderLength = 4;
+    private const int LongFormPrefixLength = 8;
     private const int LongFormControlFlagOffset = 8;
     private const int InitialBufferSize = 512;
     private static readonly byte[] s_magicHeader = [MagicHeaderFirstByte, MagicHeaderSecondByte];
@@ -87,15 +86,13 @@ public sealed class MessageStreamDecoder {
             return true;
         }
 
-        // The long form moves the control flag behind a 32-bit body length.
-        if (data.Length <= LongFormControlFlagOffset) {
+        // The long form carries the same count as a 32-bit value behind the marker.
+        if (data.Length < LongFormPrefixLength) {
             return false;
         }
 
-        var bodyLength = BinaryPrimitives.ReadUInt32LittleEndian(data[(FrameLengthFieldOffset + FrameLengthFieldSize)..]);
-        var isControl = data[LongFormControlFlagOffset] == 1;
-        var longFrameLength = LongFormHeaderLength + (isControl ? 0 : MessageLayerHeaderLength) + bodyLength + 1L;
-        frameLength = (int) System.Math.Min(longFrameLength, int.MaxValue);
+        var longLength = BinaryPrimitives.ReadUInt32LittleEndian(data[(FrameLengthFieldOffset + FrameLengthFieldSize)..]);
+        frameLength = (int) System.Math.Min(longLength + (long) LongFormPrefixLength, int.MaxValue);
 
         return true;
     }

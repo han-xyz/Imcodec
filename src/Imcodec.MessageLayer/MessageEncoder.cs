@@ -129,15 +129,15 @@ public static class MessageEncoder {
 
         // Write large header or small header, depending on the size of the payload.
         var isLongPacket = bodyDataLength > 0x777F;
-        var smallPacketLength = isControl
+        var packetLength = isControl
             ? bodyDataLength + PacketHeaderLengthSmall
             : bodyDataLength + PacketHeaderLengthLarge;
 
-        writer.WriteUInt16((ushort) (isLongPacket ? LongPacketMarker : smallPacketLength));
+        writer.WriteUInt16((ushort) (isLongPacket ? LongPacketMarker : packetLength));
 
-        // For large packets, write the full length.
+        // Large packets repeat the same count, the bytes after the length field, as a 32-bit value.
         if (isLongPacket) {
-            writer.WriteUInt32((uint) bodyDataLength);
+            writer.WriteUInt32((uint) packetLength);
         }
 
         // Write body header.
@@ -179,19 +179,13 @@ public static class MessageEncoder {
     private static (long packetLength, bool isControl, byte opCode, bool isLongPacket) DecodePacketHeader(BitReader reader) {
         long packetLength = reader.ReadUInt16();
         var isLongPacket = packetLength == LongPacketMarker;
-        long longBodyLength = 0;
         if (isLongPacket) {
-            longBodyLength = reader.ReadUInt32();
+            packetLength = reader.ReadUInt32();
         }
 
         var isControl = reader.ReadUInt8() == 1;
         var opCode = reader.ReadUInt8();
         _ = reader.ReadUInt16(); // Skip padding
-
-        if (isLongPacket) {
-            // Same value the small form would carry, see EncodePacketHeader.
-            packetLength = longBodyLength + (isControl ? PacketHeaderLengthSmall : PacketHeaderLengthLarge);
-        }
 
         return (packetLength, isControl, opCode, isLongPacket);
     }
